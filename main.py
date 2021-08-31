@@ -1,26 +1,27 @@
-import os
-import discord
 import csv
+import time
+import discord
 
-d_token = ""
+d_token = "ODgxNTcyMTY0NjkwNjQwOTA2.YSuyDg.kzO4zv2A250rApquJiIk9gKi6RQ"
 
 
 def get_all_students(student_list):
-    mat_num_list = []
+    mat_num_dict = {}
     with open(student_list, encoding="utf-8") as csv_file:
         data = csv.reader(csv_file, delimiter=";")
-        next(data) # skip 1 line
+        next(data)  # skip 1 line
         for line in data:
+            name = line[1]
             mat_num = line[2]
-            mat_num_list.append(mat_num)
-    return mat_num_list
+            mat_num_dict[name] = mat_num
+    return mat_num_dict
 
 
 def get_added_students():
     mat_num_list = []
     with open("added.txt", encoding="utf-8") as file:
         for line in file:
-            mat_num_list.append(line)
+            mat_num_list.append(line.strip())
     return mat_num_list
 
 
@@ -30,6 +31,7 @@ def write_added_students(student):
 
 
 client = discord.Client()
+
 
 @client.event
 async def on_raw_reaction_add(payload):
@@ -77,34 +79,38 @@ async def on_message(message):
             # check name format
             if len(msg_splitted[1].split(" ")) >= 2:
 
-                print(msg_splitted)
                 msg_code_uppered = msg_splitted[0].upper()
 
                 if len(msg_code_uppered) == 10 and msg_code_uppered[6] == "I":
-                    print(msg_code_uppered)
                     student_group = msg_code_uppered[6:]
                     students_list = get_all_students(f"{student_group}.csv")
                     added_students = get_added_students()
-                    
-                    #TODO: Student name and student code compare by dict?
 
-                    if msg_code_uppered in students_list and msg_code_uppered not in added_students:
-                        write_added_students(msg_code_uppered)
-                        user = message.author
-                        await user.add_roles(discord.utils.get(user.guild.roles, name="Student"))
-                        await message.channel.send("WORKS! ROLE ADDED!")
-
-                    elif msg_code_uppered in students_list and msg_code_uppered in added_students:
-                        await message.channel.send("YOU WAS PREVIOUSLY ALREADY LOGGED IN, PLEASE WRITE TO ADMINISTRATION!")
-
-                    else:
-                        await message.channel.send("Wrong student code!")
+                    try:
+                        if msg_code_uppered == students_list[msg_splitted[1]]:
+                            if msg_code_uppered not in added_students:
+                                write_added_students(msg_code_uppered)
+                                user = message.author
+                                await user.add_roles(discord.utils.get(user.guild.roles, name="Student"))
+                                botmsg = await message.channel.send("Role added!")
+                            else:
+                                botmsg = await message.channel.send(
+                                    "Your data was already used, please contact with administration!")
+                        else:
+                            botmsg = await message.channel.send("Student not found!")
+                    except KeyError:
+                        botmsg = await message.channel.send("Student not found!")
                 else:
-                    await message.channel.send("Wrong student code format!")
+                    botmsg = await message.channel.send("Wrong student code format!")
             else:
-                await message.channel.send("Wrong name format!")
+                botmsg = await message.channel.send("Wrong name format!")
         else:
-            await message.channel.send("Wrong message format!")
+            botmsg = await message.channel.send("Wrong message format!")
+
+        time.sleep(20)
+        await message.delete()
+        await botmsg.delete()
+
 
 if __name__ == '__main__':
     print("SSC\nVersion: 0.9 Release\nCopyright (C) 2021 EblanSoftware\nRunning...\n")
