@@ -2,7 +2,7 @@ import csv
 import time
 import discord
 
-d_token = "ODgxNTcyMTY0NjkwNjQwOTA2.YSuyDg.kzO4zv2A250rApquJiIk9gKi6RQ"
+d_token = ""
 
 
 def get_all_students(student_list):
