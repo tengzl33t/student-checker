@@ -2,7 +2,7 @@ import csv
 import time
 import discord
 
-d_token = ""
+d_token = "ODgxNTcyMTY0NjkwNjQwOTA2.YSuyDg.CGfnCQ_6J5f5gpLuj01JVUKCOBM"
 
 
 def get_all_students(student_list):
@@ -46,18 +46,11 @@ async def on_raw_reaction_add(payload):
 
     # welcome message check
     if payload.message_id == 876478679876767824:
-        if reaction.emoji == "🇪🇪":
-            role = discord.utils.get(guild.roles, name='EE')
+        if reaction.emoji == "✅":
+            role = discord.utils.get(guild.roles, name='Proofer')
             await payload.member.add_roles(role)
-        elif reaction.emoji == "🇬🇧":
-            role = discord.utils.get(guild.roles, name='ENG')
-            await payload.member.add_roles(role)
-        elif reaction.emoji == "🇷🇺":
-            role = discord.utils.get(guild.roles, name='RU')
-            await payload.member.add_roles(role)
-
-        # remove reaction
-        await reaction.remove(payload.member)
+            # remove reaction
+            await reaction.remove(payload.member)
 
 
 @client.event
@@ -67,7 +60,7 @@ async def on_message(message):
             return
         return
 
-    channels_list = [881980743872565268, 881980719545585725, 881980694237184030, 881578607590408243]
+    channels_list = [881980694237184030]
 
     if message.channel.id in channels_list:
 
@@ -83,7 +76,15 @@ async def on_message(message):
 
                 if len(msg_code_uppered) == 10 and msg_code_uppered[6] == "I":
                     student_group = msg_code_uppered[6:]
-                    students_list = get_all_students(f"{student_group}.csv")
+                    try:
+                        students_list = get_all_students(f"{student_group}.csv")
+                    except FileNotFoundError:
+                        botmsg = await message.channel.send("Student group not found!")
+                        time.sleep(10)
+                        await message.delete()
+                        await botmsg.delete()
+                        return
+
                     added_students = get_added_students()
 
                     try:
@@ -92,6 +93,7 @@ async def on_message(message):
                                 write_added_students(msg_code_uppered)
                                 user = message.author
                                 await user.add_roles(discord.utils.get(user.guild.roles, name="Student"))
+                                await user.remove_roles(discord.utils.get(user.guild.roles, name="Proofer"))
                                 botmsg = await message.channel.send("Role added!")
                             else:
                                 botmsg = await message.channel.send(
@@ -107,7 +109,7 @@ async def on_message(message):
         else:
             botmsg = await message.channel.send("Wrong message format!")
 
-        time.sleep(20)
+        time.sleep(10)
         await message.delete()
         await botmsg.delete()
 
